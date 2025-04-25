@@ -14,7 +14,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
     },
   })
 
-  return products.map((product) => ({
+  return products.map((product: any) => ({
     id: product.id,
     name: product.name,
     description: product.description,
@@ -58,7 +58,8 @@ export async function getProductById(id: string): Promise<Product | null> {
     price: Number.parseFloat(product.price.toString()),
     originalPrice: product.originalPrice ? Number.parseFloat(product.originalPrice.toString()) : undefined,
     imageUrl: product.images.length > 0 ? product.images[0].url : "/placeholder.svg",
-    images: product.images.map((img) => img.url),
+    images: product.images.map((img: { url: string }) => img.url),
+
     categoryId: product.categoryId,
     category: product.category
       ? {
@@ -89,7 +90,7 @@ export async function getProductsByCategory(categoryId: string): Promise<Product
     },
   })
 
-  return products.map((product) => ({
+  return products.map((product: any) => ({
     id: product.id,
     name: product.name,
     description: product.description,
@@ -123,7 +124,7 @@ export async function getAllProducts(): Promise<Product[]> {
     },
   })
 
-  return products.map((product) => ({
+  return products.map((product: any) => ({
     id: product.id,
     name: product.name,
     description: product.description,

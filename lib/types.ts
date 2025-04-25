@@ -29,6 +29,8 @@ export interface Category {
   products?: Product[]
 }
 
+
+
 export interface CartItem {
   id: string
   name: string
