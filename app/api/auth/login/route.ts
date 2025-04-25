@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { compare } from "bcrypt"
-import { sql } from "@/lib/db"
+import { prisma } from "@/lib/db"
 import { z } from "zod"
 import { sign } from "jsonwebtoken"
 
@@ -22,15 +22,13 @@ export async function POST(request: Request) {
     const { email, password } = result.data
 
     // Find user
-    const users = await sql`
-      SELECT id, name, email, password FROM "User" WHERE email = ${email}
-    `
+    const user = await prisma.user.findUnique({
+      where: { email },
+    })
 
-    if (users.length === 0) {
+    if (!user) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
-
-    const user = users[0]
 
     // Verify password
     const passwordMatch = await compare(password, user.password)

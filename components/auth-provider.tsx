@@ -28,11 +28,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (typeof window !== "undefined") {
-          const savedUser = localStorage.getItem("user")
-          if (savedUser) {
-            setUser(JSON.parse(savedUser))
-          }
+        const savedUser = localStorage.getItem("user")
+        if (savedUser) {
+          setUser(JSON.parse(savedUser))
         }
       } catch (error) {
         console.error("Authentication error:", error)
@@ -47,22 +45,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signIn = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      // For preview purposes, let's just simulate a successful login
-      const mockUser = {
-        id: "user_1",
-        name: "Test User",
-        email: email,
-      }
-
-      setUser(mockUser)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(mockUser))
-      }
-      router.push("/")
-      return
-
-      // Actual implementation (commented out for now)
-      /*
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -80,7 +62,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(data.user)
       localStorage.setItem("user", JSON.stringify(data.user))
       router.push("/account")
-      */
     } catch (error) {
       console.error("Sign in error:", error)
       throw error
@@ -92,22 +73,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUp = async (name: string, email: string, password: string) => {
     setIsLoading(true)
     try {
-      // For preview purposes, let's just simulate a successful signup
-      const mockUser = {
-        id: "user_1",
-        name: name,
-        email: email,
-      }
-
-      setUser(mockUser)
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user", JSON.stringify(mockUser))
-      }
-      router.push("/")
-      return
-
-      // Actual implementation (commented out for now)
-      /*
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -123,7 +88,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // After signup, log the user in
       await signIn(email, password)
-      */
     } catch (error) {
       console.error("Sign up error:", error)
       throw error
@@ -134,9 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = () => {
     setUser(null)
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("user")
-    }
+    localStorage.removeItem("user")
     router.push("/")
   }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { createContext, useContext, useState, useEffect } from "react"
 import type { Product, CartItem } from "@/lib/types"
 
@@ -30,34 +31,22 @@ export function CartProvider({ children }: CartProviderProps) {
     subtotal: 0,
   })
 
-  // Load cart from localStorage on initial load
+  // Load cart from localStorage on initial render
   useEffect(() => {
-    const loadCart = () => {
+    const savedCart = localStorage.getItem("cart")
+    if (savedCart) {
       try {
-        if (typeof window !== "undefined") {
-          const savedCart = localStorage.getItem("cart")
-          if (savedCart) {
-            const parsedCart = JSON.parse(savedCart)
-            setCart(parsedCart)
-          }
-        }
+        const parsedCart = JSON.parse(savedCart)
+        setCart(parsedCart)
       } catch (error) {
         console.error("Failed to parse cart from localStorage:", error)
       }
     }
-
-    loadCart()
   }, [])
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("cart", JSON.stringify(cart))
-      }
-    } catch (error) {
-      console.error("Failed to save cart to localStorage:", error)
-    }
+    localStorage.setItem("cart", JSON.stringify(cart))
   }, [cart])
 
   const calculateSubtotal = (items: CartItem[]): number => {

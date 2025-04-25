@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
-import { getCategoryBySlug, getProductsByCategorySlug } from "@/lib/products"
+import { prisma } from "@/lib/db"
 import ProductCard from "@/components/product-card"
-import { sql } from "@/lib/db"
 
 interface CategoryPageProps {
   params: {
@@ -12,13 +11,36 @@ interface CategoryPageProps {
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = params
 
-  const category = await getCategoryBySlug(slug)
+  const category = await prisma.category.findUnique({
+    where: { slug },
+    include: {
+      products: {
+        include: {
+          images: {
+            take: 1,
+          },
+        },
+      },
+    },
+  })
 
   if (!category) {
     notFound()
   }
 
-  const products = await getProductsByCategorySlug(slug)
+  const products = category.products.map((product) => ({
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: Number.parseFloat(product.price.toString()),
+    originalPrice: product.originalPrice ? Number.parseFloat(product.originalPrice.toString()) : undefined,
+    imageUrl: product.images.length > 0 ? product.images[0].url : "/placeholder.svg",
+    categoryId: product.id,
+    featured: product.featured,
+    inStock: product.inStock,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  }))
 
   return (
     <div className="bg-[#f8f6e9] py-12">
@@ -46,13 +68,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 }
 
 export async function generateStaticParams() {
-  try {
-    const categories = await sql`SELECT slug FROM "Category"`
-    return categories.map((category: any) => ({
-      slug: category.slug,
-    }))
-  } catch (error) {
-    console.error("Error generating static params:", error)
-    return []
-  }
+  const categories = await prisma.category.findMany({
+    select: { slug: true },
+  })
+
+  return categories.map((category) => ({
+    slug: category.slug,
+  }))
 }

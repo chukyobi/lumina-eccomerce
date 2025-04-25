@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { hash } from "bcrypt"
-import { sql } from "@/lib/db"
+import { prisma } from "@/lib/db"
 import { z } from "zod"
 
 const signupSchema = z.object({
@@ -22,11 +22,11 @@ export async function POST(request: Request) {
     const { name, email, password } = result.data
 
     // Check if user already exists
-    const existingUsers = await sql`
-      SELECT id FROM "User" WHERE email = ${email}
-    `
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    })
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 })
     }
 
@@ -34,30 +34,28 @@ export async function POST(request: Request) {
     const hashedPassword = await hash(password, 10)
 
     // Create user
-    const [user] = await sql`
-      INSERT INTO "User" (name, email, password)
-      VALUES (${name}, ${email}, ${hashedPassword})
-      RETURNING id, name, email, created_at
-    `
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    })
 
     // Create wishlist for user
-    await sql`
-      INSERT INTO "Wishlist" (user_id)
-      VALUES (${user.id})
-    `
-
-    return NextResponse.json(
-      {
-        message: "User created successfully",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          createdAt: user.created_at,
-        },
+    await prisma.wishlist.create({
+      data: {
+        userId: user.id,
       },
-      { status: 201 },
-    )
+    })
+
+    return NextResponse.json({ message: "User created successfully", user }, { status: 201 })
   } catch (error) {
     console.error("Signup error:", error)
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 })

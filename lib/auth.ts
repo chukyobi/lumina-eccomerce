@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcrypt"
-import { sql } from "@/lib/db"
+import { prisma } from "@/lib/db"
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -15,36 +15,26 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        try {
-          const users = await sql`
-            SELECT id, name, email, password FROM "User" 
-            WHERE email = ${credentials.email}
-          `
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email,
+          },
+        })
 
-          if (users.length === 0) {
-            return null
-          }
-
-          const user = users[0]
-
-          if (!user?.password) {
-            return null
-          }
-
-          const isPasswordCorrect = await bcrypt.compare(credentials.password, user.password)
-
-          if (!isPasswordCorrect) {
-            return null
-          }
-
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          }
-        } catch (error) {
-          console.error("Auth error:", error)
+        if (!user || !user?.password) {
           return null
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(credentials.password, user.password)
+
+        if (!isPasswordCorrect) {
+          return null
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
         }
       },
     }),
